@@ -18,11 +18,12 @@ const requestListener = async (req, res) => {
     }
     console.log(path);
 
-    writeConfigFromRequest(queryObject);
-
     switch(path){
+        case '/':
+            initiateFlow(res);
+            break;
         case '/code':
-            makeRequest('https://login.microsoftonline.com//oauth2/v2.0/token', payload(config.code)+`&code=${queryObject.code}`, (resp=>{
+            makeRequest(`https://login.microsoftonline.com/${config.tenant}/oauth2/v2.0/token`, payload(config.code)+`&code=${queryObject.code}`, (resp=>{
                 config.refresh.token=resp.refresh_token;
                 fs.writeFile('./http-server/config.yml', yaml.dump(config), (err)=>{
                     console.log(err);
@@ -44,7 +45,7 @@ const requestListener = async (req, res) => {
         case '/refresh':
             const body = payload(config.refresh);
             body.redirect_uri=undefined;
-            makeRequest('https://login.microsoftonline.com//oauth2/v2.0/token', body+`&refresh_token=${config.refresh.token}`, (resp=>{
+            makeRequest(`https://login.microsoftonline.com/${config.tenant}/oauth2/v2.0/token`, body+`&refresh_token=${config.refresh.token}`, (resp=>{
                 config.refresh.token=resp.refresh_token;
                 fs.writeFile('./http-server/config.yml', yaml.dump(config), (err)=>{
                     console.log(err);
@@ -60,10 +61,6 @@ const requestListener = async (req, res) => {
             res.end('My http server!');
     }
 };
-const writeConfigFromRequest = (queryParams)=>{
-    config.client_id=queryParams.client_id;
-    config.scope=queryParams.scope;
-}
 const payload=(obj)=>{
     return `client_id=${config.client_id}`+
                 `&scope=${config.scope}`+
@@ -79,7 +76,17 @@ const makeRequest = async (url, payload, success, failure)=>{
         console.log(tokenResp.data);
     }
 }
-
+const initiateFlow = (res)=>{
+    res.writeHead(301, {
+        Location: `https://login.microsoftonline.com/${config.tenant}/oauth2/v2.0/authorize?`+
+        `client_id=${config.client_id}`+
+        `&response_type=${config.response_type}`+
+        `&redirect_uri=${config.redirect_uri}`+
+        `&response_mode=${config.response_mode}`+
+        `&scope=${config.scope}`+
+        `&state=${config.state}`
+    }).end();
+}
 const server = http.createServer(requestListener);
 server.listen(port, host, ()=>{
     console.log(`Serving on http://${host}:${port}`);
