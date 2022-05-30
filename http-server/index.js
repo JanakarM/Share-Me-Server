@@ -17,9 +17,12 @@ const requestListener = async (req, res) => {
         path = path.substring(0, path.indexOf('?'));
     }
     console.log(path);
+
+    writeConfigFromRequest(queryObject);
+
     switch(path){
         case '/code':
-            makeRequest('https://login.microsoftonline.com/m365qa.onmicrosoft.com/oauth2/v2.0/token', payload(config.code)+`&code=${queryObject.code}`, (resp=>{
+            makeRequest('https://login.microsoftonline.com//oauth2/v2.0/token', payload(config.code)+`&code=${queryObject.code}`, (resp=>{
                 config.refresh.token=resp.refresh_token;
                 fs.writeFile('./http-server/config.yml', yaml.dump(config), (err)=>{
                     console.log(err);
@@ -41,7 +44,7 @@ const requestListener = async (req, res) => {
         case '/refresh':
             const body = payload(config.refresh);
             body.redirect_uri=undefined;
-            makeRequest('https://login.microsoftonline.com/m365qa.onmicrosoft.com/oauth2/v2.0/token', body+`&refresh_token=${config.refresh.token}`, (resp=>{
+            makeRequest('https://login.microsoftonline.com//oauth2/v2.0/token', body+`&refresh_token=${config.refresh.token}`, (resp=>{
                 config.refresh.token=resp.refresh_token;
                 fs.writeFile('./http-server/config.yml', yaml.dump(config), (err)=>{
                     console.log(err);
@@ -57,6 +60,10 @@ const requestListener = async (req, res) => {
             res.end('My http server!');
     }
 };
+const writeConfigFromRequest = (queryParams)=>{
+    config.client_id=queryParams.client_id;
+    config.scope=queryParams.scope;
+}
 const payload=(obj)=>{
     return `client_id=${config.client_id}`+
                 `&scope=${config.scope}`+
