@@ -105,7 +105,7 @@ const upload= multer({
             cb(null, path.join(__dirname, 'assets/images'))
         },
         filename: (req, file, cb)=> {
-            cb(null, `post_${Date.now()}.jpg`)
+            cb(null,`post_${Date.now()}.jpg`)
         }
 
     })
