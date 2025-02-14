@@ -2,7 +2,7 @@ const express= require('express')
 const multer= require('multer')
 const path= require('path')
 const { nextTick } = require('process')
-const port= 8000
+const port= 7070
 const fileOptions= {
     root: path.join(__dirname, 'assets/images'),
     dotfiles: 'deny',
@@ -96,6 +96,10 @@ const posts= [
 let postId=7
 
 app= express()
+app.all("*", (req, res, next) => {
+    console.log("Request Received! " + req.url);
+    res.send("Request Received! " + req.url);
+});
 app.get("/", (req, res, next)=> {
     res.send("Hello !!!")
 })
@@ -143,7 +147,7 @@ app.get("/posts", (req, res)=> {
 })
 app.listen(port, (error)=>{
     if(error) throw error
-    console.log("Server running on 8000")
+    console.log("Server running on " + port)
 })
 function getUploadedFile(){
     return "file";
